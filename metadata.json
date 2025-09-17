@@ -1,0 +1,5 @@
+{
+  "name": "Kanji Decomposer",
+  "description": "An app to translate Japanese words, break down kanji into their meanings, and show their component radicals using WaniKani and Gemini data.",
+  "requestFramePermissions": []
+}

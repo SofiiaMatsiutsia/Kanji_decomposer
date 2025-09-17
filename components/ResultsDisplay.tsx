@@ -6,14 +6,14 @@ interface ResultsDisplayProps {
 }
 
 const RadicalChip: React.FC<{ character: string | null; meaning: string }> = ({ character, meaning }) => (
-  <div className="flex items-center gap-2 bg-[#ECE9D8] rounded-sm px-2 py-0.5 text-m border border-r-black border-b-black border-l-white border-t-white">
-    <span className="font-bold text-blue-700">{character || '🖼️'}</span>
+  <div className="flex items-center gap-2 bg-[#ECE9D8] rounded-sm px-2 py-0.5 text-l border border-r-black border-b-black border-l-white border-t-white">
+    <span className="font-bold text-blue-700 text-xl">{character || '🖼️'}</span>
     <span className="text-black">{meaning}</span>
   </div>
 );
 
 const KanjiCard: React.FC<{ detail: KanjiDetail }> = ({ detail }) => (
-  <fieldset className="border border-gray-400 p-2 text-m w-full">
+  <fieldset className="border border-gray-400 p-2 text-l w-full">
     <legend className="px-1 text-m">Kanji: {detail.character}</legend>
     <div className="flex items-center gap-4 mb-3">
       <div className="flex-shrink-0 bg-blue-600 text-white w-12 h-12 flex items-center justify-center border-2 border-blue-800">
@@ -27,7 +27,7 @@ const KanjiCard: React.FC<{ detail: KanjiDetail }> = ({ detail }) => (
 
     {detail.radicals.length > 0 && (
        <div>
-        <h4 className="font-semibold text-black mb-2 text-m">Component Radicals:</h4>
+        <h4 className="font-semibold text-black mb-2 text-m">Radicals</h4>
         <div className="flex flex-wrap gap-2">
           {detail.radicals.map(radical => (
             <RadicalChip key={radical.id} character={radical.character} meaning={radical.meaning} />
@@ -42,9 +42,9 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result }) => {
   return (
     <div className="space-y-4 animate-fade-in text-m">
       <fieldset className="border border-gray-400 p-3">
-        <legend className="px-1 text-m">Translation</legend>
+        <legend className="px-1 text-l">Translation</legend>
         <div className="flex items-baseline gap-4">
-            <p className="text-xl font-bold">{result.originalWord}</p>
+            <p className="text-xl font-semibold">{result.originalWord}</p>
             <span className="text-gray-500 font-bold">&rarr;</span>
             <p className="text-xl font-bold text-blue-700">{result.translation}</p>
         </div>

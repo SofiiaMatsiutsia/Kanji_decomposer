@@ -1,4 +1,3 @@
-
 import { WaniKaniCollection, KanjiDetail, WaniKaniSubject, Radical } from '../types';
 
 const WANIKANI_API_TOKEN = '2741ad3d-28b2-49b3-a102-866be002fecd';
@@ -38,37 +37,45 @@ export async function getKanjiAndRadicals(kanjiCharacters: string[]): Promise<Ka
       return [];
   }
 
+  // Create a map of the returned kanji data for easy lookup by character.
+  // The API doesn't guarantee the order of the returned subjects.
+  const kanjiDataMap = new Map<string, WaniKaniSubject>();
+  for (const kanji of kanjiCollection.data) {
+      if (kanji.data.slug) {
+          kanjiDataMap.set(kanji.data.slug, kanji);
+      }
+  }
+
   // 2. Collect all unique radical IDs from the fetched kanji
   const allRadicalIds = new Set<number>();
   kanjiCollection.data.forEach(kanji => {
     kanji.data.component_subject_ids?.forEach(id => allRadicalIds.add(id));
   });
 
-  if (allRadicalIds.size === 0) {
-      // Handle cases where kanji might not have component radicals listed
-       return kanjiCollection.data.map(kanji => ({
-        id: kanji.id,
-        character: kanji.data.slug,
-        meaning: getPrimaryMeaning(kanji),
-        radicals: [],
-      }));
+  const radicalsMap = new Map<number, Radical>();
+
+  // 3. Fetch all required radical subjects in one go, if any exist.
+  if (allRadicalIds.size > 0) {
+    const radicalIds = Array.from(allRadicalIds).join(',');
+    const radicalCollection = await fetchWaniKani<WaniKaniCollection>(`subjects?ids=${radicalIds}`);
+    
+    radicalCollection.data.forEach(radical => {
+        radicalsMap.set(radical.id, {
+          id: radical.id,
+          character: radical.data.characters,
+          meaning: getPrimaryMeaning(radical),
+        });
+    });
   }
 
-  // 3. Fetch all required radical subjects in one go
-  const radicalIds = Array.from(allRadicalIds).join(',');
-  const radicalCollection = await fetchWaniKani<WaniKaniCollection>(`subjects?ids=${radicalIds}`);
-  
-  const radicalsMap = new Map<number, Radical>();
-  radicalCollection.data.forEach(radical => {
-      radicalsMap.set(radical.id, {
-        id: radical.id,
-        character: radical.data.characters,
-        meaning: getPrimaryMeaning(radical),
-      });
-  });
+  // 4. Map the radicals back to their parent kanji, ensuring the order from the input array is preserved.
+  const kanjiDetails = kanjiCharacters.map(character => {
+    const kanji = kanjiDataMap.get(character);
+    if (!kanji) {
+      // This case should be rare if WaniKani API returns data for all requested slugs.
+      return null;
+    }
 
-  // 4. Map the radicals back to their parent kanji
-  const kanjiDetails = kanjiCollection.data.map(kanji => {
     const kanjiRadicals = kanji.data.component_subject_ids
       ?.map(id => radicalsMap.get(id))
       .filter((r): r is Radical => r !== undefined) || [];
@@ -79,7 +86,7 @@ export async function getKanjiAndRadicals(kanjiCharacters: string[]): Promise<Ka
       meaning: getPrimaryMeaning(kanji),
       radicals: kanjiRadicals,
     };
-  });
+  }).filter((detail): detail is KanjiDetail => detail !== null);
 
   return kanjiDetails;
 }
